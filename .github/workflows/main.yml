@@ -11,10 +11,13 @@ jobs:
         run: Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
 
       - name: Extract ngrok
-        run: Expand-Archive ngrok.zip -DestinationPath .
+        run: Expand-Archive -Path ngrok.zip -DestinationPath .
+
+      - name: Verify ngrok Path
+        run: dir ngrok.exe
 
       - name: Authenticate ngrok
-        run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
+        run: ./ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
         env:
           NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
 
@@ -35,10 +38,10 @@ jobs:
           Set-LocalUser -Name "runneradmin" -Password $password
 
       - name: Create ngrok Tunnel
-        run: .\ngrok\ngrok.exe tcp 3389
+        run: ./ngrok.exe tcp 3389
 
       - name: Print ngrok Tunnels
-        run: .\ngrok\ngrok.exe tunnels
+        run: ./ngrok.exe tunnels
 
       - name: Check RDP Service
         run: Get-Service TermService
@@ -50,4 +53,4 @@ jobs:
         run: |
           Get-Service TermService
           Get-NetFirewallRule -DisplayGroup "Remote Desktop"
-          .\ngrok\ngrok.exe tunnels
+          ./ngrok.exe tunnels
