@@ -29,14 +29,33 @@ jobs:
       - name: Set up ngrok authtoken
         run: |
           .\ngrok\ngrok.exe authtoken 2sAvueHHgn26Y6IRJx1eNINbnrj_5wFaMLmzZ5QvXr7bc4seF
+
       # Step 4: Expose a port with ngrok (e.g., port 3389 for RDP or any other port)
       - name: Expose port with ngrok
         run: |
           Start-Process -NoNewWindow -FilePath "$PWD/ngrok/ngrok.exe" -ArgumentList "tcp 3389"
 
-      # Step 5: Wait a few seconds for ngrok to establish connection and fetch the public URL
-      - name: Get ngrok public URL
+      # Step 5: Wait for ngrok to initialize and retry fetching the public URL
+      - name: Wait for ngrok and get public URL
         run: |
-          Start-Sleep -Seconds 5
-          $ngrok_url = (Invoke-RestMethod -Uri http://localhost:4040/api/tunnels).tunnels[0].public_url
-          Write-Output "Ngrok is running at $ngrok_url"
+          $maxRetries = 10
+          $retryCount = 0
+          $ngrokUrl = $null
+          
+          while ($retryCount -lt $maxRetries -and $ngrokUrl -eq $null) {
+            try {
+              # Attempt to get ngrok URL
+              $ngrokUrl = (Invoke-RestMethod -Uri http://localhost:4040/api/tunnels).tunnels[0].public_url
+              Write-Output "Ngrok is running at $ngrokUrl"
+            } catch {
+              # Retry after a short delay
+              Write-Output "Waiting for ngrok to start..."
+              Start-Sleep -Seconds 5
+              $retryCount++
+            }
+          }
+
+          if ($ngrokUrl -eq $null) {
+            Write-Error "Failed to get ngrok URL after $maxRetries retries"
+            exit 1
+          }
