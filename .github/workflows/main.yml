@@ -16,38 +16,28 @@ jobs:
       - name: Verify ngrok Path
         run: dir ngrok.exe
 
-      - name: Authenticate ngrok
-        run: ./ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
-        env:
-          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
-
       - name: Enable RDP Service
-        run: |
-          Install-WindowsFeature -Name RDS-RD-Server
-          Start-Service TermService
-
-      - name: Enable RDP Connections
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+          Set-Service -Name TermService -StartupType Automatic
+          Start-Service -Name TermService
 
       - name: Set Runner Password
         run: |
           $password = ConvertTo-SecureString "P@ssw0rd!" -AsPlainText -Force
           Set-LocalUser -Name "runneradmin" -Password $password
 
+      - name: Authenticate ngrok
+        run: ./ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
+        env:
+          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+
       - name: Create ngrok Tunnel
         run: ./ngrok.exe tcp 3389
 
       - name: Print ngrok Tunnels
         run: ./ngrok.exe tunnels
-
-      - name: Check RDP Service
-        run: Get-Service TermService
-
-      - name: Check Firewall Rules
-        run: Get-NetFirewallRule -DisplayGroup "Remote Desktop"
 
       - name: Debug Logs
         run: |
