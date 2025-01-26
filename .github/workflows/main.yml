@@ -1,25 +1,41 @@
-name: CI
+#!/bin/bash
 
-on: [push, workflow_dispatch]
+# Update and install necessary packages
+echo "Updating system and installing necessary packages..."
+sudo apt-get update -y
+sudo apt-get upgrade -y
+sudo apt-get install -y xrdp xfce4 xfce4-goodies curl unzip
 
-jobs:
-  build:
+# Set xfce as the default desktop environment for RDP
+echo "Setting xfce as default desktop environment for RDP..."
+echo "startxfce4" > ~/.xsession
 
-    runs-on: windows-latest
+# Enable and start XRDP service
+echo "Enabling and starting XRDP service..."
+sudo systemctl enable xrdp
+sudo systemctl start xrdp
 
-    steps:
-    - name: Download
-      run: Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
-    - name: Extract
-      run: Expand-Archive ngrok.zip
-    - name: Auth
-      run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
-      env:
-        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
-    - name: Enable TS
-      run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
-    - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-    - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
-    - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
-    - name: Create Tunnel
-      run: .\ngrok\ngrok.exe tcp 3389
+# Open RDP port (3389)
+echo "Opening RDP port 3389..."
+sudo ufw allow 3389/tcp
+
+# Download ngrok (to expose RDP port)
+echo "Downloading and installing ngrok..."
+curl -s https://ngrok.com/download | tar xz
+sudo mv ngrok /usr/local/bin
+
+# Set up ngrok with your authtoken (replace with your own)
+echo "Setting up ngrok with your authtoken..."
+ngrok authtoken 2fuxZSXwhHpP5fYB69m24cxM1ZK_2K44ET6iHG4vTag5VQ9Ps
+
+# Expose RDP port (3389) via ngrok
+echo "Starting ngrok to expose port 3389..."
+ngrok tcp 3389 &
+
+# Get the ngrok public endpoint
+echo "Getting the ngrok public endpoint for RDP access..."
+sleep 5  # wait for ngrok to establish connection
+NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+
+echo "RDP is set up and accessible via: $NGROK_URL"
+echo "You can connect to your VPS using an RDP client and the ngrok endpoint: $NGROK_URL"
