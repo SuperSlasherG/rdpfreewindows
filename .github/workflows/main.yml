@@ -18,8 +18,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Step 2: Download and install ngrok
-      - name: Download ngrok
+      # Step 2: Download and install the latest ngrok version
+      - name: Download latest ngrok
         run: |
           Invoke-WebRequest -Uri https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
           Expand-Archive -Path ngrok.zip -DestinationPath ngrok
@@ -28,7 +28,7 @@ jobs:
       # Step 3: Set up ngrok with your authtoken (replace with your own token)
       - name: Set up ngrok authtoken
         run: |
-          .\ngrok\ngrok.exe authtoken 2sAvueHHgn26Y6IRJx1eNINbnrj_5wFaMLmzZ5QvXr7bc4seF
+          .\ngrok\ngrok.exe authtoken 2fuxZSXwhHpP5fYB69m24cxM1ZK_2K44ET6iHG4vTag5VQ9Ps
 
       # Step 4: Expose a port with ngrok (e.g., port 3389 for RDP or any other port)
       - name: Expose port with ngrok
