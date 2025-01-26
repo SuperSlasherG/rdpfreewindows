@@ -33,7 +33,7 @@ jobs:
       # Step 4: Expose a port with ngrok (e.g., port 3389 for RDP or any other port)
       - name: Expose port 3389 (or change the port as needed)
         run: |
-          Start-Process -NoNewWindow -FilePath ngrok -ArgumentList "tcp 3389" 
+     Start-Process -NoNewWindow -FilePath "$PWD/ngrok/ngrok.exe" -ArgumentList "tcp 3389"
 
       # Step 5: Wait a few seconds for ngrok to establish connection and fetch the public URL
       - name: Get ngrok public URL
