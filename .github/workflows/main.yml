@@ -28,12 +28,12 @@ jobs:
       # Step 3: Set up ngrok with your authtoken (replace with your own token)
       - name: Set up ngrok authtoken
         run: |
-          .\ngrok\ngrok authtoken 2sAvueHHgn26Y6IRJx1eNINbnrj_5wFaMLmzZ5QvXr7bc4seF
+          .\ngrok\ngrok.exe authtoken 2fuxZSXwhHpP5fYB69m24cxM1ZK_2K44ET6iHG4vTag5VQ9Ps
 
       # Step 4: Expose a port with ngrok (e.g., port 3389 for RDP or any other port)
-      - name: Expose port 3389 (or change the port as needed)
+      - name: Expose port with ngrok
         run: |
-     Start-Process -NoNewWindow -FilePath "$PWD/ngrok/ngrok.exe" -ArgumentList "tcp 3389"
+          Start-Process -NoNewWindow -FilePath "$PWD/ngrok/ngrok.exe" -ArgumentList "tcp 3389"
 
       # Step 5: Wait a few seconds for ngrok to establish connection and fetch the public URL
       - name: Get ngrok public URL
