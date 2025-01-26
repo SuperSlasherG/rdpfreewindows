@@ -13,9 +13,6 @@ jobs:
       - name: Extract ngrok
         run: Expand-Archive -Path ngrok.zip -DestinationPath .
 
-      - name: Verify ngrok Path
-        run: dir ngrok.exe
-
       - name: Enable RDP Service
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
@@ -35,9 +32,11 @@ jobs:
 
       - name: Create ngrok Tunnel
         run: |
-          ./ngrok.exe tcp 3389 > ngrok.log &
+          ./ngrok.exe tcp 3389 --log=stdout > ngrok.log &
           Start-Sleep -Seconds 10
 
+      - name: Check ngrok Logs
+        run: type ngrok.log
+
       - name: Print ngrok Tunnel Info
-        run: |
-          type ngrok.log
+        run: ./ngrok.exe tunnels
