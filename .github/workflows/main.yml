@@ -31,12 +31,13 @@ jobs:
           NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
 
       - name: Create ngrok Tunnel
-        run: |
-          ./ngrok.exe tcp 3389 --log=stdout > ngrok.log &
-          Start-Sleep -Seconds 10
+        run: ./ngrok.exe tcp 3389 --log=stdout --log-level=debug > ngrok.log
 
       - name: Check ngrok Logs
-        run: type ngrok.log
+        run: |
+          echo "=== NGROK LOG START ==="
+          type ngrok.log
+          echo "=== NGROK LOG END ==="
 
       - name: Print ngrok Tunnel Info
         run: ./ngrok.exe tunnels
