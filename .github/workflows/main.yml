@@ -1,63 +1,25 @@
-name: Enable RDP and ngrok Tunnel
+name: CI-RDP
 
-on:
-  push:
-    branches:
-      - main
+on: [push, workflow_dispatch]
 
 jobs:
-  RDP:
+  build:
+
     runs-on: windows-latest
+
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
-
-      # Step 1: Set up RDP
-      - name: Enable RDP and Configure Firewall
-        run: |
-          # Enable RDP
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-          # Allow RDP through the firewall
-          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          # Start the RDP service
-          Set-Service -Name TermService -StartupType Automatic
-          Start-Service -Name TermService
-
-      # Step 2: Download ngrok
-      - name: Download ngrok
-        run: |
-          Invoke-WebRequest -Uri https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
-          Expand-Archive ngrok.zip -DestinationPath .\ngrok
-
-      # Step 3: Authenticate ngrok
-      - name: Authenticate ngrok
-        env:
-          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
-        run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
-
-      # Step 4: Start ngrok TCP Tunnel
-      - name: Start ngrok TCP Tunnel
-        id: ngrok
-        run: |
-          Start-Process -FilePath .\ngrok\ngrok.exe -ArgumentList "tcp 3389" -NoNewWindow -PassThru | Out-File ngrok_pid.txt
-          # Give it some time to initialize
-          Start-Sleep -Seconds 5
-
-      # Step 5: Wait for Tunnel Initialization
-      - name: Wait for ngrok Initialization
-        run: Start-Sleep -Seconds 10
-
-      # Step 6: Retrieve ngrok Tunnel Info
-      - name: Print ngrok Tunnel Info
-        run: |
-          $ngrokInfo = .\ngrok\ngrok.exe tunnels
-          Write-Host "Ngrok Tunnel Info:"
-          Write-Host $ngrokInfo
-
-      # Step 7: Debugging - Verify RDP Service
-      - name: Verify RDP Service
-        run: |
-          # Confirm RDP service is running
-          Get-Service -Name TermService
-          # Confirm port 3389 is listening
-          netstat -an | findstr "3389"
+    - name: Download
+      run: Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
+    - name: Extract
+      run: Expand-Archive ngrok.zip
+    - name: Auth
+      run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
+      env:
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+    - name: Enable TS
+      run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
+    - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+    - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+    - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+    - name: Create Tunnel
+      run: .\ngrok\ngrok.exe tcp 3389
