@@ -34,12 +34,10 @@ jobs:
           NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
 
       - name: Create ngrok Tunnel
-        run: Start-Process -FilePath ./ngrok.exe -ArgumentList "tcp 3389" -NoNewWindow
-
-      - name: Wait for ngrok Tunnel
         run: |
+          ./ngrok.exe tcp 3389 > ngrok.log &
           Start-Sleep -Seconds 10
-          ./ngrok.exe tunnels
 
       - name: Print ngrok Tunnel Info
-        run: ./ngrok.exe tunnels
+        run: |
+          type ngrok.log
