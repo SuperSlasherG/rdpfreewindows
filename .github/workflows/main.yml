@@ -1,41 +1,43 @@
-#!/bin/bash
+name: Setup ngrok and Expose Port on Windows
 
-# Update and install necessary packages
-echo "Updating system and installing necessary packages..."
-sudo apt-get update -y
-sudo apt-get upgrade -y
-sudo apt-get install -y xrdp xfce4 xfce4-goodies curl unzip
+# Trigger the workflow on push to the main branch
+on:
+  push:
+    branches:
+      - main
 
-# Set xfce as the default desktop environment for RDP
-echo "Setting xfce as default desktop environment for RDP..."
-echo "startxfce4" > ~/.xsession
+# Define the jobs for this workflow
+jobs:
+  build:
+    # Specify that the job runs on Windows
+    runs-on: windows-latest
 
-# Enable and start XRDP service
-echo "Enabling and starting XRDP service..."
-sudo systemctl enable xrdp
-sudo systemctl start xrdp
+    # Steps to execute within the job
+    steps:
+      # Step 1: Check out the code from the repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-# Open RDP port (3389)
-echo "Opening RDP port 3389..."
-sudo ufw allow 3389/tcp
+      # Step 2: Download and install ngrok
+      - name: Download ngrok
+        run: |
+          Invoke-WebRequest -Uri https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+          Expand-Archive -Path ngrok.zip -DestinationPath ngrok
+          $env:PATH += ";$PWD/ngrok"
 
-# Download ngrok (to expose RDP port)
-echo "Downloading and installing ngrok..."
-curl -s https://ngrok.com/download | tar xz
-sudo mv ngrok /usr/local/bin
+      # Step 3: Set up ngrok with your authtoken (replace with your own token)
+      - name: Set up ngrok authtoken
+        run: |
+          .\ngrok authtoken 2fuxZSXwhHpP5fYB69m24cxM1ZK_2K44ET6iHG4vTag5VQ9Ps
 
-# Set up ngrok with your authtoken (replace with your own)
-echo "Setting up ngrok with your authtoken..."
-ngrok authtoken 2fuxZSXwhHpP5fYB69m24cxM1ZK_2K44ET6iHG4vTag5VQ9Ps
+      # Step 4: Expose a port with ngrok (e.g., port 3389 for RDP or any other port)
+      - name: Expose port 3389 (or change the port as needed)
+        run: |
+          Start-Process -NoNewWindow -FilePath ngrok -ArgumentList "tcp 3389" 
 
-# Expose RDP port (3389) via ngrok
-echo "Starting ngrok to expose port 3389..."
-ngrok tcp 3389 &
-
-# Get the ngrok public endpoint
-echo "Getting the ngrok public endpoint for RDP access..."
-sleep 5  # wait for ngrok to establish connection
-NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
-
-echo "RDP is set up and accessible via: $NGROK_URL"
-echo "You can connect to your VPS using an RDP client and the ngrok endpoint: $NGROK_URL"
+      # Step 5: Wait a few seconds for ngrok to establish connection and fetch the public URL
+      - name: Get ngrok public URL
+        run: |
+          Start-Sleep -Seconds 5
+          $ngrok_url = (Invoke-RestMethod -Uri http://localhost:4040/api/tunnels).tunnels[0].public_url
+          Write-Output "Ngrok is running at $ngrok_url"
