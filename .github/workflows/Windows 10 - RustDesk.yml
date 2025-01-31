@@ -26,3 +26,10 @@ jobs:
       - name: Verify Password Change
         shell: cmd
         run: net user runneradmin
+
+      - name: Wait 10 seconds multiple times
+        run: |
+          for ($i=1; $i -le 5; $i++) {
+            echo "Waiting 10 seconds... ($i)"
+            Start-Sleep -Seconds 10
+          }
