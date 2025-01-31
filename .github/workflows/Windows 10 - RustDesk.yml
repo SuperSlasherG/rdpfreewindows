@@ -20,3 +20,11 @@ jobs:
 
       - name: Time Counter
         run: python time.py
+
+      - name: Debug Logs
+        run: |
+          if (Test-Path rustdesk.log) {
+            Get-Content rustdesk.log
+          } else {
+            Write-Output "No rustdesk.log file found."
+          }
