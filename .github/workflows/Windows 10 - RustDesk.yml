@@ -21,10 +21,12 @@ jobs:
       - name: Time Counter
         run: python time.py
 
-      - name: Debug Logs
+      - name: Set Password for runneradmin (Self-Hosted Only)
+        shell: pwsh
         run: |
-          if (Test-Path rustdesk.log) {
-            Get-Content rustdesk.log
-          } else {
-            Write-Output "No rustdesk.log file found."
-          }
+          $password = ConvertTo-SecureString "YourNewPassword123!" -AsPlainText -Force
+          Set-LocalUser -Name "runneradmin" -Password $password
+
+      - name: Verify Password Change
+        shell: cmd
+        run: net user runneradmin
