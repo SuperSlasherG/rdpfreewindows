@@ -1,61 +1,22 @@
-name: Setup ngrok and Expose Port on Windows
+name: Windows - RustDesk
 
-# Trigger the workflow on push to the main branch
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
-# Define the jobs for this workflow
 jobs:
   build:
-    # Specify that the job runs on Windows
+    name: Start Building...
     runs-on: windows-latest
-
-    # Steps to execute within the job
+    timeout-minutes: 9999
+    
     steps:
-      # Step 1: Check out the code from the repository
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      # Step 2: Download and install the latest ngrok version (3.x or higher)
-      - name: Download latest ngrok
+      - name: Downloading & Installing Essentials
         run: |
-          Invoke-WebRequest -Uri https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
-          Expand-Archive -Path ngrok.zip -DestinationPath ngrok
-          $env:PATH += ";$PWD/ngrok"
+          Invoke-WebRequest -Uri "https://www.dropbox.com/scl/fi/qdyd4p9t6xoabl95n5o3g/Downloads.bat?rlkey=snr74vv1vr8k5suujugvrhjtm&dl=1" -OutFile "Downloads.bat"
+          cmd /c Downloads.bat
 
-      # Step 3: Set up ngrok with your authtoken (replace with your own token)
-      - name: Set up ngrok authtoken
-        run: |
-          .\ngrok\ngrok.exe authtoken 2sAvueHHgn26Y6IRJx1eNINbnrj_5wFaMLmzZ5QvXr7bc4seF
+      - name: Log In To AnyDesk
+        run: cmd /c show.bat
 
-      # Step 4: Expose a port with ngrok (e.g., port 3389 for RDP or any other port)
-      - name: Expose port with ngrok
-        run: |
-          Start-Process -NoNewWindow -FilePath "$PWD/ngrok/ngrok.exe" -ArgumentList "tcp 3389"
-
-      # Step 5: Wait for ngrok to initialize and retry fetching the public URL
-      - name: Wait for ngrok and get public URL
-        run: |
-          $maxRetries = 10
-          $retryCount = 0
-          $ngrokUrl = $null
-          
-          while ($retryCount -lt $maxRetries -and $ngrokUrl -eq $null) {
-            try {
-              # Attempt to get ngrok URL
-              $ngrokUrl = (Invoke-RestMethod -Uri http://localhost:4040/api/tunnels).tunnels[0].public_url
-              Write-Output "Ngrok is running at $ngrokUrl"
-            } catch {
-              # Retry after a short delay
-              Write-Output "Waiting for ngrok to start..."
-              Start-Sleep -Seconds 5
-              $retryCount++
-            }
-          }
-
-          if ($ngrokUrl -eq $null) {
-            Write-Error "Failed to get ngrok URL after $maxRetries retries"
-            exit 1
-          }
+      - name: Time Counter
+        run: python time.py
