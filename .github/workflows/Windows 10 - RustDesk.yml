@@ -27,9 +27,10 @@ jobs:
         shell: cmd
         run: net user runneradmin
 
-      - name: Wait 10 seconds multiple times
+      - name: Wait for an hour 1000 times
+        shell: pwsh
         run: |
-          for ($i=1; $i -le 5; $i++) {
-            echo "Waiting 10 seconds... ($i)"
-            Start-Sleep -Seconds 10
+          for ($i=1; $i -le 1000; $i++) {  # Loop 1000 times
+            echo "Waiting for an hour... ($i)"
+            Start-Sleep -Seconds 3600  # Wait for 1 hour (3600 seconds)
           }
